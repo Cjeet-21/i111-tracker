@@ -417,6 +417,18 @@ async function main() {
     badResult.html.includes("Invalid email or password")
   );
 
+  // --- 9. Cleanup ----------------------------------------------------------
+  // The smoke test runs against the real database, so remove its throwaway
+  // users (cascades to problems, revisions and sessions).
+  console.log("\nCleanup");
+  const { PrismaClient: CleanupClient } = await import("@prisma/client");
+  const cleanup = new CleanupClient();
+  const removed = await cleanup.user.deleteMany({
+    where: { email: { in: [emailA, emailB] } },
+  });
+  await cleanup.$disconnect();
+  ok("test users removed from the database", removed.count >= 1);
+
   console.log(
     `\n${passed} passed, ${failed} failed (${passed + failed} checks)`
   );
