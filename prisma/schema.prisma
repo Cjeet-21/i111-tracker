@@ -1,0 +1,106 @@
+// Prisma schema for the i111 revision tracker.
+// Database: PostgreSQL (managed — Neon, Supabase, Railway, Aurora, ...).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique @db.VarChar(320)
+  name         String?  @db.VarChar(120)
+  passwordHash String   @db.VarChar(255)
+  timezone     String   @default("UTC") @db.VarChar(64)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  problems Problem[]
+  revisions RevisionHistory[]
+  sessions Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique @db.VarChar(64)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model Problem {
+  id               String        @id @default(cuid())
+  userId           String
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title            String        @db.VarChar(300)
+  url              String?       @db.VarChar(2048)
+  description      String?       @db.Text
+  topic            String?       @db.VarChar(120)
+  difficulty       Difficulty?
+  // Calendar date (stored as UTC midnight) on which the problem was solved.
+  solvedAt         DateTime
+  // i111 stage: 0 = Immediate, 1 = 1 Day, 2 = 1 Week, 3 = 1 Month, 4 = Completed.
+  currentStage     Int           @default(0)
+  // Cycle number so a problem can (in future) be re-entered into a new i111 run.
+  cycle            Int           @default(1)
+  // Calendar date (UTC midnight) of the next scheduled revision.
+  nextRevisionDate DateTime
+  status           ProblemStatus @default(ACTIVE)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  revisions RevisionHistory[]
+
+  @@index([userId])
+  @@index([nextRevisionDate])
+  @@index([status])
+  @@index([userId, status, nextRevisionDate])
+  @@index([userId, currentStage])
+  @@index([topic])
+  @@map("problems")
+}
+
+model RevisionHistory {
+  id            String   @id @default(cuid())
+  problemId     String
+  problem       Problem  @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cycle         Int      @default(1)
+  stage         Int
+  // Date the revision was scheduled for (UTC midnight calendar date).
+  scheduledDate DateTime
+  // Exact moment the revision was actually completed (UTC timestamp).
+  completedAt   DateTime
+  createdAt     DateTime @default(now())
+
+  // Prevents accidental duplicate revision submissions for the same stage.
+  @@unique([problemId, cycle, stage])
+  @@index([problemId])
+  @@index([userId])
+  @@index([completedAt])
+  @@map("revision_history")
+}
+
+enum ProblemStatus {
+  ACTIVE
+  COMPLETED
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
