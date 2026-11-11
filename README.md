@@ -206,6 +206,22 @@ inside the action (never trusting client input).
 
 6. **Deploy** — push to `main`; Vercel builds and serves the app. First visit: **Sign up**.
 
+### Same thing with the Vercel CLI
+
+```bash
+npm i -g vercel
+vercel login                                   # device-code login
+vercel link --project i111-tracker --yes       # creates + links the project
+vercel env add DATABASE_URL production --value "$(...)" --sensitive --yes
+vercel env add DIRECT_URL   production --value "$(...)" --sensitive --yes
+vercel env add AUTH_SECRET  production --value "$(...)" --sensitive --yes
+vercel deploy --prod
+vercel ls                                     # production URL
+```
+
+`vercel.json` pins the build command (`npx prisma migrate deploy && next build`) and the
+function region (`sin1` — Singapore, next to the Neon database).
+
 Notes:
 
 - The session cookie is `httpOnly` + `Secure` (auto in production) + `sameSite=lax`.
