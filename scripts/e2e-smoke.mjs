@@ -149,10 +149,16 @@ async function main() {
   const anon = new Session("anon");
   const home = await anon.get("/");
   ok(
-    "anonymous / redirects to /login",
-    home.response.status >= 300 &&
-      home.response.status < 400 &&
-      (home.response.headers.get("location") || "").includes("/login")
+    "anonymous / renders the public landing page",
+    home.response.status === 200 &&
+      home.html.includes("Actually remember it") &&
+      home.html.includes("Immediate") &&
+      home.html.includes("1 Month"),
+    `status ${home.response.status}`
+  );
+  ok(
+    "landing page offers sign up and log in",
+    home.html.includes("Create account") && home.html.includes("Log in")
   );
 
   const protectedPage = await anon.get("/dashboard");

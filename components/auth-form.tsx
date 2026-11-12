@@ -12,28 +12,34 @@ import { btnPrimaryClass, inputClass, labelClass } from "@/components/ui";
 export function AuthForm({
   mode,
   next,
+  variant = "page",
 }: {
   mode: "login" | "signup";
   next?: string;
+  /** "embedded" drops the internal heading and the login/signup cross-link. */
+  variant?: "page" | "embedded";
 }) {
   const action = mode === "login" ? signInAction : signUpAction;
   const [state, formAction, pending] = useActionState<AuthFormState, FormData>(
     action,
     {}
   );
+  const embedded = variant === "embedded";
 
   return (
     <form action={formAction} className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold text-slate-900">
-          {mode === "login" ? "Welcome back" : "Create your account"}
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          {mode === "login"
-            ? "Sign in to see today's revisions."
-            : "Start tracking your practice problems."}
-        </p>
-      </div>
+      {embedded ? null : (
+        <div>
+          <h1 className="text-xl font-bold text-slate-900">
+            {mode === "login" ? "Welcome back" : "Create your account"}
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            {mode === "login"
+              ? "Sign in to see today's revisions."
+              : "Start tracking your practice problems."}
+          </p>
+        </div>
+      )}
 
       {state.error ? (
         <div
@@ -49,7 +55,7 @@ export function AuthForm({
       {mode === "signup" ? (
         <div>
           <label htmlFor="name" className={labelClass}>
-            Name <span className="font-normal text-slate-400">(optional)</span>
+            Name <span className="font-normal text-slate-500">(optional)</span>
           </label>
           <input
             id="name"
@@ -106,29 +112,31 @@ export function AuthForm({
             : "Create account"}
       </button>
 
-      <p className="text-center text-sm text-slate-600">
-        {mode === "login" ? (
-          <>
-            No account yet?{" "}
-            <Link
-              href={`/signup${next && next !== "/dashboard" ? `?next=${encodeURIComponent(next)}` : ""}`}
-              className="font-semibold text-indigo-600 hover:text-indigo-500"
-            >
-              Sign up
-            </Link>
-          </>
-        ) : (
-          <>
-            Already registered?{" "}
-            <Link
-              href={`/login${next && next !== "/dashboard" ? `?next=${encodeURIComponent(next)}` : ""}`}
-              className="font-semibold text-indigo-600 hover:text-indigo-500"
-            >
-              Log in
-            </Link>
-          </>
-        )}
-      </p>
+      {embedded ? null : (
+        <p className="text-center text-sm text-slate-600">
+          {mode === "login" ? (
+            <>
+              No account yet?{" "}
+              <Link
+                href={`/signup${next && next !== "/dashboard" ? `?next=${encodeURIComponent(next)}` : ""}`}
+                className="font-semibold text-indigo-600 hover:text-indigo-500"
+              >
+                Sign up
+              </Link>
+            </>
+          ) : (
+            <>
+              Already registered?{" "}
+              <Link
+                href={`/login${next && next !== "/dashboard" ? `?next=${encodeURIComponent(next)}` : ""}`}
+                className="font-semibold text-indigo-600 hover:text-indigo-500"
+              >
+                Log in
+              </Link>
+            </>
+          )}
+        </p>
+      )}
     </form>
   );
 }
